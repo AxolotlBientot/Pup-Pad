@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ryder's Pup Pad - Mission & Tasks</title>
+  <style>
+    body {
+      margin: 0;
+      background: #001a3d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+    }
+    .pad {
+      background: #022;
+      border-radius: 40px;
+      border: 8px solid #0af;
+      width: 400px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 0 25px #000;
+      position: relative;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      color: #ff0;
+      text-shadow: 2px 2px #000;
+      font-size: 26px;
+    }
+    .btn {
+      background: #ff0;
+      color: #022;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: transform 0.2s;
+      user-select: none;
+    }
+    .btn:hover {
+      transform: scale(1.1);
+    }
+    .screen {
+      display: none;
+      margin-top: 20px;
+    }
+    .active {
+      display: block;
+    }
+    .pup-card {
+      background: #fff;
+      color: #022;
+      border-radius: 12px;
+      width: 90px;
+      padding: 8px;
+      margin: 6px;
+      display: inline-block;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      text-align: center;
+      user-select: none;
+    }
+    .pup-card:hover {
+      transform: scale(1.1);
+    }
+    .pup-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin-bottom: 6px;
+    }
+    input[type='text'] {
+      width: 90%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+    #task-img, #mission-img {
+      margin-top: 15px;
+      width: 100%;
+      border-radius: 12px;
+      display: none;
+      box-shadow: 0 0 15px #0af;
+    }
+    .back-btn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: #ff0;
+      color: #022;
+      border-radius: 12px;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+    }
+    /* New roll message style */
+    #roll-message {
+      margin-top: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #0f0;
+      text-shadow: 0 0 8px #0f0;
+      display: none;
+      user-select: none;
+    }
+    /* New "On a Roll" button style */
+    #on-roll-btn {
+      margin-top: 20px;
+      background: #0f0;
+      color: #022;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="pad">
+    <h1>Ryder’s Pup Pad</h1>
+
+    <!-- Subseries Selection -->
+    <div id="screen-subseries" class="screen active">
+      <div><strong>Select a Subseries</strong></div>
+      <div id="subseries-list" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- Mission input for subseries -->
+    <div id="screen-mission" class="screen">
+      <button class="back-btn" onclick="showScreen('subseries')">← Back</button>
+      <h2 id="mission-subseries-title"></h2>
+      <div>Type mission name for this subseries:</div>
+      <input id="mission-input" type="text" placeholder="e.g. Rescue at the waterfall" />
+      <button class="btn" onclick="showMission()">Show Mission</button>
+      <img id="mission-img" alt="Mission Image" />
+    </div>
+
+    <!-- Pup Selection -->
+    <div id="screen-pups" class="screen">
+      <button class="back-btn" onclick="showScreen('subseries')">← Back</button>
+      <h2 id="subseries-title"></h2>
+      <div id="pup-list" style="margin-top: 15px;"></div>
+
+      <!-- New On a Roll button -->
+      <button id="on-roll-btn" class="btn">
+        <span id="roll-text"></span>
+        <span style="margin-left: 8px;">🚀</span>
+      </button>
+
+      <!-- Celebration message -->
+      <div id="roll-message"></div>
+    </div>
+
+    <!-- Task Input and Result -->
+    <div id="screen-task" class="screen">
+      <button class="back-btn" onclick="showScreen('pups')">← Back</button>
+      <h3 id="selected-pup"></h3>
+      <div>What should this pup do?</div>
+      <input id="task-input" type="text" placeholder="Type task or action..." />
+      <button class="btn" style="margin-top:10px;" onclick="showTask()">Show Task</button>
+      <p id="task-text" style="margin-top:15px; font-size: 18px; font-weight: bold;"></p>
+      <img id="task-img" alt="Task Image" />
+    </div>
+  </div>
+
+  <script>
+    // Data for pups in subseries
+    const subseriesData = {
+      Original: ["Chase", "Marshall", "Skye", "Rocky", "Zuma", "Rubble"],
+      "Mighty Pups": [
+        "Chase", "Marshall", "Skye", "Rocky", "Zuma", "Rubble", "Everest", "Tracker", "Ella", "Tuck"
+      ],
+      "Mission Paw": [
+        "Chase", "Marshall", "Skye", "Rocky", "Zuma", "Rubble", "Tracker", "Robo-Dog"
+      ],
+      "Dino Rescue": [
+        "Chase", "Marshall", "Skye", "Zuma", "Rubble", "Rex"
+      ],
+      "Cat Pack": [
+        "Wild", "Leo", "Shade", "Rory"
+      ],
+      "Jungle Rescue": [
+        "Ryder", "Chase", "Marshall", "Skye", "Rubble", "Tracker"
+      ],
+    };
+
+    // Simple Base64 placeholder images for pups
+    function getBase64(pup) {
+      const b64 = {
+        Chase: "aHR0cHM6Ly9lNy5wbmdlZ2cuY29tL3BuZ2ltYWdlcy85MTgvNzI4L3BuZy1jbGlwYXJ0LWJhZGdlLWNoYXNlLWJhbmstcGF0cm9sLWRyYXdpbmctcGF3LXBhdHJvbC1ibHVlLWFuZC15ZWxsb3ctc3Rhci1sb2dvLW1pc2NlbGxhbmVvdXMtZW1ibGVtLnBuZw=",
+        Marshall: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAARUlEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhpaohF0ZL+v6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BUo6TVLXNdWe4AAAAASUVORK5CYII=",
+        Skye: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASUlEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqZgHgOVQWzH5fV2e1+v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8DUQ6M0HJ+BNlEAAAAASUVORK5CYII=",
+        Rocky: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhpoEBYVp/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BUU9nyOHOUcywAAAABJRU5ErkJggg==",
+        Zuma: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAATUlEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQSxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTR11J2INeCdzQAAAABJRU5ErkJggg==",
+        Rubble: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqREXFzY9Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTjNf+nUUxlAAAAAElFTkSuQmCC",
+        Everest: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Tracker: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Ella: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Tuck: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        "Robo-Dog": "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Rex: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Wild: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Leo: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Shade: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Rory: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+        Ryder: "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAASklEQVRoge3BMQEAAAgDoJvcP7GxAzFEdhqRQkxLfL6v1+r9fq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq/Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq9Xq8BTTxM0fkUwvAAAAAElFTkSuQmCC",
+      };
+      return "data:image/png;base64," + (b64[pup] || b64.Chase);
+    }
+
+    // Elements
+    const subseriesList = document.getElementById("subseries-list");
+    const missionInput = document.getElementById("mission-input");
+    const missionImg = document.getElementById("mission-img");
+    const missionSubseriesTitle = document.getElementById("mission-subseries-title");
+
+    const subseriesTitle = document.getElementById("subseries-title");
+    const pupList = document.getElementById("pup-list");
+
+    const selectedPupName = document.getElementById("selected-pup");
+    const taskInput = document.getElementById("task-input");
+    const taskText = document.getElementById("task-text");
+    const taskImg = document.getElementById("task-img");
+
+    const onRollBtn = document.getElementById("on-roll-btn");
+    const rollText = document.getElementById("roll-text");
+    const rollMessage = document.getElementById("roll-message");
+
+    let currentSubseries = "";
+    let currentPup = "";
+    let rollInterval = null;
+    let rollIndex = 0;
+
+    // Show/hide screens
+    function showScreen(name) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById("screen-" + name).classList.add("active");
+
+      // Clear images & inputs on mission or task screen
+      if(name === "mission"){
+        missionImg.style.display = "none";
+        missionInput.value = "";
+        missionInput.focus();
+      }
+      if(name === "task"){
+        taskImg.style.display = "none";
+        taskInput.value = "";
+        taskText.textContent = "";
+        taskInput.focus();
+      }
+
+      // Show/hide on-roll button and message only on pups screen
+      if(name === "pups"){
+        onRollBtn.style.display = "inline-block";
+        rollMessage.style.display = "none";
+      } else {
+        onRollBtn.style.display = "none";
+        rollMessage.style.display = "none";
+        clearHighlight();
+      }
+    }
+
+    // Initialize subseries buttons
+    function initSubseries() {
+      subseriesList.innerHTML = "";
+      for (const s of Object.keys(subseriesData)) {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = s;
+        btn.onclick = () => {
+          currentSubseries = s;
+          missionSubseriesTitle.textContent = s + " Mission";
+          showScreen("mission");
+        };
+        subseriesList.appendChild(btn);
+      }
+    }
+
+    // Show pups for the subseries
+    function showPups() {
+      subseriesTitle.textContent = currentSubseries;
+      pupList.innerHTML = "";
+      for (const pup of subseriesData[currentSubseries]) {
+        const card = document.createElement("div");
+        card.className = "pup-card";
+        card.innerHTML = `<img src="${getBase64(pup)}" alt="${pup}" /><div>${pup}</div>`;
+        card.onclick = () => {
+          currentPup = pup;
+          selectedPupName.textContent = pup;
+          showScreen("task");
+        };
+        pupList.appendChild(card);
+      }
+      showScreen("pups");
+      setupRollButton();
+    }
+
+    // Setup On a Roll button text and event
+    function setupRollButton() {
+      rollText.textContent = `${currentSubseries} is on a roll!`;
+      clearHighlight();
+    }
+
+    // Clear any highlighting & intervals on pups
+    function clearHighlight() {
+      clearInterval(rollInterval);
+      rollInterval = null;
+      rollIndex = 0;
+      // Remove highlight class from all pups
+      const pups = document.querySelectorAll("#pup-list .pup-card");
+      pups.forEach(pup => {
+        pup.style.boxShadow = "";
+        pup.style.transform = "";
+      });
+      rollMessage.style.display = "none";
+    }
+
+    // Animate the pups in a glowing "roll" effect
+    function startRollAnimation() {
+      if(rollInterval) return; // already running
+
+      const pups = document.querySelectorAll("#pup-list .pup-card");
+      if(pups.length === 0) return;
+
+      rollMessage.style.display = "none";
+      rollIndex = 0;
+      rollInterval = setInterval(() => {
+        pups.forEach((pup, idx) => {
+          if(idx === rollIndex) {
+            pup.style.boxShadow = "0 0 20px 8px #0f0";
+            pup.style.transform = "scale(1.2)";
+            pup.style.zIndex = "10";
+          } else {
+            pup.style.boxShadow = "";
+            pup.style.transform = "";
+            pup.style.zIndex = "1";
+          }
+        });
+        rollIndex++;
+        if(rollIndex >= pups.length) {
+          clearInterval(rollInterval);
+          rollInterval = null;
+          // Show message after roll
+          pups.forEach(pup => {
+            pup.style.boxShadow = "";
+            pup.style.transform = "";
+            pup.style.zIndex = "1";
+          });
+          rollMessage.textContent = `${currentSubseries} is on a roll! 🎉`;
+          rollMessage.style.display = "block";
+        }
+      }, 400);
+    }
+
+    onRollBtn.addEventListener("click", startRollAnimation);
+
+    // Show mission image from Unsplash
+    async function showMission() {
+      const mission = missionInput.value.trim();
+      if (!mission) {
+        alert("Please enter a mission name!");
+        return;
+      }
+
+      missionImg.style.display = "none";
+      missionImg.alt = "";
+      missionImg.src = "";
+
+      // Use Unsplash API to get mission image
+      const query = encodeURIComponent(mission + " adventure");
+      const accessKey = "J4KtMvzyBy3aGbPHqOH0tNvxG0hdT6XyST1JD2eJq-I"; // Replace this with your Unsplash Access Key
+      const url = `https://api.unsplash.com/photos/random?query=${query}&client_id=${accessKey}&orientation=landscape`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Image fetch failed");
+        const data = await response.json();
+        missionImg.src = data.urls.small;
+        missionImg.alt = mission;
+        missionImg.style.display = "block";
+
+        // After 3 seconds show pups
+        setTimeout(() => {
+          showPups();
+        }, 3000);
+      } catch (e) {
+        alert("Could not fetch image for the mission.");
+        showPups();
+      }
+    }
+
+    // Show pup task and image from Unsplash
+    async function showTask() {
+      const task = taskInput.value.trim();
+      if (!task) {
+        alert("Please enter a task!");
+        return;
+      }
+
+      taskText.textContent = `${currentPup} will: ${task}`;
+      taskImg.style.display = "none";
+      taskImg.alt = "";
+      taskImg.src = "";
+
+      // Use Unsplash API to get task image
+      const query = encodeURIComponent(task);
+      const accessKey = "J4KtMvzyBy3aGbPHqOH0tNvxG0hdT6XyST1JD2eJq-I"; // Replace this with your Unsplash Access Key
+      const url = `https://api.unsplash.com/photos/random?query=${query}&client_id=${accessKey}&orientation=squarish`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Image fetch failed");
+        const data = await response.json();
+        taskImg.src = data.urls.small;
+        taskImg.alt = task;
+        taskImg.style.display = "block";
+      } catch (e) {
+        alert("Could not fetch image for the task.");
+      }
+    }
+
+    // Init
+    initSubseries();
+  </script>
+</body>
+</html>
